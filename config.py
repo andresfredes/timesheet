@@ -21,3 +21,5 @@ WINDOW = {
     "WIDTH":1920,
     "HEIGHT":1080
 }
+
+DATA_DIR = "data/"
