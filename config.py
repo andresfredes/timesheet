@@ -16,8 +16,8 @@
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
 WINDOW = {
-    "XPOS":0,
-    "YPOS":0,
+    "XPOS":500,
+    "YPOS":500,
     "WIDTH":1920,
     "HEIGHT":1080
 }

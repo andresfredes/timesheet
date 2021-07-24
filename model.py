@@ -22,7 +22,7 @@ from config import DATA_DIR
 class Timesheet():
     def __init__():
         try:
-            os.mkdir()
+            os.mkdir(DATA_DIR)
         except FileExistsError:
-            
+            pass
         
