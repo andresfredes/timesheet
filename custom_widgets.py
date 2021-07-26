@@ -15,7 +15,9 @@
 #     You should have received a copy of the GNU General Public License
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (QAction, QComboBox, QLabel, QLineEdit, QPushButton, QSizePolicy)
 
 class Action(QAction):
     def __init__(self, name, window, shortcut, tip, func):
@@ -23,3 +25,52 @@ class Action(QAction):
         self.setShortcut(shortcut)
         self.setStatusTip(tip)
         self.triggered.connect(func)
+
+
+class Label(QLabel):
+    def __init__(self, text="", size=20, style=None):
+        super().__init__()
+        self.setText(text)
+        self.setAlignment(Qt.AlignCenter)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        font = Font(size, style)
+        self.setFont(font)
+
+
+class Font(QFont):
+    def __init__(self, size=20, style=None):
+        super().__init__()
+        self.setPointSize(size)
+        if style == "strike":
+            self.setStrikeOut(True)
+        if style == "italic:":
+            self.setItalic(True)
+        if style == "bold":
+            self.setBold(True)
+
+
+class TextBox(QLineEdit):
+    def __init__(self, placeholder=""):
+        super().__init__()
+        self.setPlaceholderText(placeholder)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setFont(Font())
+
+
+class ComboBox(QComboBox):
+    def __init__(self, items=[], func=None):
+        super().__init__()
+        self.addItems(items)
+        if func:
+            self.activated.connect(func)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setFont(Font())
+
+
+class Button(QPushButton):
+    def __init__(self, text="", func=None):
+        super().__init__()
+        self.setText(text)
+        if func:
+            self.clicked.connect(func)
+        self.setFont(Font())

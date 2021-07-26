@@ -15,19 +15,21 @@
 #     You should have received a copy of the GNU General Public License
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QTableView, QVBoxLayout, QWidget
 
 from config import WINDOW
-from custom_widgets import *
+from custom_widgets import (Action, Label, TextBox, ComboBox, Button)
+from model import JSON_Model as Model
 
 class UI(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.title = "Time Tracker"
+        self.model = Model()
         self.init_UI()
 
     def init_UI(self):
-        # self.setWindowTitle(self.title)
+        self.setWindowTitle(self.title)
         self.setGeometry(
             WINDOW["XPOS"],
             WINDOW["YPOS"],
@@ -50,7 +52,53 @@ class UI(QMainWindow):
         file_menu.addAction(exit_option)
 
     def add_widgets(self):
-        pass
+        self.central = QWidget()
+        layout = QHBoxLayout()
+
+        clocker = Task_Clocker(self.model)
+        layout.addLayout(clocker)
+        recent = Recent_Items(self.model)
+        layout.addLayout(recent)
+
+        self.central.setLayout(layout)
+        self.setCentralWidget(self.central)
+
+    def refresh_UI(self):
+        self.central.setParent(None)
+        self.add_widgets()
 
     def close(self):
         super().close()
+
+
+class Task_Clocker(QVBoxLayout):
+    def __init__(self, model):
+        super().__init__()
+        hbox = QHBoxLayout()
+        task_label = Label(text="Task:")
+        hbox.addWidget(task_label)
+        text_box = TextBox(placeholder="Enter Task Name")
+        hbox.addWidget(text_box)
+        or_label = Label(text="OR")
+        hbox.addWidget(or_label)
+        
+        combo = ComboBox()
+        hbox.addWidget(combo)
+        self.addLayout(hbox)
+        
+        button = Button(text="Clock In")
+        self.addWidget(button)
+
+        self.addStretch(1)
+
+
+class Recent_Items(QVBoxLayout):
+    def __init__(self, model):
+        super().__init__()
+        label = Label(text="Recent Items")
+        self.addWidget(label)
+
+        table = QTableView()
+        table.setModel(model)
+        self.addWidget(table)
+    

@@ -23,3 +23,11 @@ WINDOW = {
 }
 
 DATA_DIR = "data/"
+
+COLUMN_HEADERS = [
+    "INDEX",
+    "TIME",
+    "DATE",
+    "TASK",
+    "ACTION"
+]
