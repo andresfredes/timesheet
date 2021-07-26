@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QTableView, QVBoxLayout, Q
 
 from config import WINDOW
 from custom_widgets import (Action, Label, TextBox, ComboBox, Button)
-from model import JSON_Model as Model
+from model import Model
 
 class UI(QMainWindow):
     def __init__(self):
@@ -74,6 +74,9 @@ class UI(QMainWindow):
 class Task_Clocker(QVBoxLayout):
     def __init__(self, model):
         super().__init__()
+
+        self.addStretch(1)
+        
         hbox = QHBoxLayout()
         task_label = Label(text="Task:")
         hbox.addWidget(task_label)
@@ -95,7 +98,7 @@ class Task_Clocker(QVBoxLayout):
 class Recent_Items(QVBoxLayout):
     def __init__(self, model):
         super().__init__()
-        label = Label(text="Recent Items")
+        label = Label(text="History")
         self.addWidget(label)
 
         table = QTableView()

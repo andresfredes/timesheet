@@ -32,7 +32,6 @@ class Label(QLabel):
         super().__init__()
         self.setText(text)
         self.setAlignment(Qt.AlignCenter)
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
         font = Font(size, style)
         self.setFont(font)
 
@@ -53,7 +52,6 @@ class TextBox(QLineEdit):
     def __init__(self, placeholder=""):
         super().__init__()
         self.setPlaceholderText(placeholder)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.setFont(Font())
 
 
@@ -63,7 +61,6 @@ class ComboBox(QComboBox):
         self.addItems(items)
         if func:
             self.activated.connect(func)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.setFont(Font())
 
 
