@@ -57,7 +57,7 @@ class UI(QMainWindow):
 
         clocker = Task_Clocker(self.model)
         layout.addLayout(clocker)
-        recent = Recent_Items(self.model)
+        history = History(self.model)
         layout.addLayout(recent)
 
         self.central.setLayout(layout)
@@ -68,6 +68,7 @@ class UI(QMainWindow):
         self.add_widgets()
 
     def close(self):
+        self.model.db.close()
         super().close()
 
 
@@ -77,25 +78,42 @@ class Task_Clocker(QVBoxLayout):
 
         self.addStretch(1)
         
-        hbox = QHBoxLayout()
+        hbox1 = QHBoxLayout()
         task_label = Label(text="Task:")
-        hbox.addWidget(task_label)
+        hbox1.addWidget(task_label)
         text_box = TextBox(placeholder="Enter Task Name")
-        hbox.addWidget(text_box)
+        hbox1.addWidget(text_box)
         or_label = Label(text="OR")
-        hbox.addWidget(or_label)
-        
+        hbox1.addWidget(or_label)
         combo = ComboBox()
-        hbox.addWidget(combo)
-        self.addLayout(hbox)
-        
+        hbox1.addWidget(combo)
+        self.addLayout(hbox1)
+
+        hbox2 = QHBoxLayout()
+        project_label = Label(text="Project:")
+        hbox2.addWidget(project_label)
+        text_box2 = TextBox(placeholder="Enter Project Name")
+        hbox2.addWidget(text_box2)
+        or_label2 = Label(text="OR")
+        hbox2.addWidget(or_label2)
+        combo2 = ComboBox()
+        hbox2.addWidget(combo2)
+        self.addLayout(hbox2)
+
+        hbox3 = QHBoxLayout()
+        notes_label = Label(text="Notes (Optional):")
+        hbox3.addWidget(notes_label)
+        text_box3 = TextBox(placeholder="Enter Notes")
+        hbox3.addWidget(text_box3)
+        self.addLayout(hbox3)
+
         button = Button(text="Clock In")
         self.addWidget(button)
 
         self.addStretch(1)
 
 
-class Recent_Items(QVBoxLayout):
+class History(QVBoxLayout):
     def __init__(self, model):
         super().__init__()
         label = Label(text="History")
