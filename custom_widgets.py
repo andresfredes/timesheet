@@ -15,9 +15,10 @@
 #     You should have received a copy of the GNU General Public License
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (QAction, QComboBox, QLabel, QLineEdit, QPushButton, QSizePolicy)
+from PyQt5.QtCore import Qt, QRegularExpression
+from PyQt5.QtGui import QFont, QRegularExpressionValidator
+from PyQt5.QtWidgets import (QAction, QComboBox, QLabel, QLineEdit,
+                             QPushButton)
 
 class Action(QAction):
     def __init__(self, name, window, shortcut, tip, func):
@@ -71,3 +72,8 @@ class Button(QPushButton):
         if func:
             self.clicked.connect(func)
         self.setFont(Font())
+
+class RegExValidator(QRegularExpressionValidator):
+    def __init__(self, pattern):
+        re = QRegularExpression(pattern)
+        super().__init__(re)

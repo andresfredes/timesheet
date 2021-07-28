@@ -15,10 +15,12 @@
 #     You should have received a copy of the GNU General Public License
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QTableView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (QHBoxLayout, QMainWindow, QTableView, QVBoxLayout,
+                             QWidget)
 
 from config import WINDOW
-from custom_widgets import (Action, Label, TextBox, ComboBox, Button)
+from custom_widgets import (Action, Label, RegExValidator, TextBox, ComboBox,
+                            Button)
 from model import Model
 
 class UI(QMainWindow):
@@ -58,7 +60,7 @@ class UI(QMainWindow):
         clocker = Task_Clocker(self.model)
         layout.addLayout(clocker)
         history = History(self.model)
-        layout.addLayout(recent)
+        layout.addLayout(history)
 
         self.central.setLayout(layout)
         self.setCentralWidget(self.central)
@@ -75,42 +77,72 @@ class UI(QMainWindow):
 class Task_Clocker(QVBoxLayout):
     def __init__(self, model):
         super().__init__()
-
+        self.model = model
         self.addStretch(1)
-        
-        hbox1 = QHBoxLayout()
-        task_label = Label(text="Task:")
-        hbox1.addWidget(task_label)
-        text_box = TextBox(placeholder="Enter Task Name")
-        hbox1.addWidget(text_box)
-        or_label = Label(text="OR")
-        hbox1.addWidget(or_label)
-        combo = ComboBox()
-        hbox1.addWidget(combo)
-        self.addLayout(hbox1)
 
-        hbox2 = QHBoxLayout()
-        project_label = Label(text="Project:")
-        hbox2.addWidget(project_label)
-        text_box2 = TextBox(placeholder="Enter Project Name")
-        hbox2.addWidget(text_box2)
-        or_label2 = Label(text="OR")
-        hbox2.addWidget(or_label2)
-        combo2 = ComboBox()
-        hbox2.addWidget(combo2)
-        self.addLayout(hbox2)
+        tasks, projects = model.tasks_projects()
+        self.task_box = Textbox_with_Combo(self, "Task", tasks)
+        self.addLayout(self.task_box)
+        self.project_box = Textbox_with_Combo(self, "Project", projects)
+        self.addLayout(self.project_box)
 
-        hbox3 = QHBoxLayout()
+        notes_box_layout = QHBoxLayout()
         notes_label = Label(text="Notes (Optional):")
-        hbox3.addWidget(notes_label)
-        text_box3 = TextBox(placeholder="Enter Notes")
-        hbox3.addWidget(text_box3)
-        self.addLayout(hbox3)
+        notes_box_layout.addWidget(notes_label)
+        self.notes_box = TextBox(placeholder="Enter Notes")
+        notes_box_layout.addWidget(self.notes_box)
+        self.addLayout(notes_box_layout)
 
-        button = Button(text="Clock In")
-        self.addWidget(button)
+        self.button = Button(text="Clock In", func=self.clock_in)
+        self.button.setEnabled(False)
+        self.addWidget(self.button)
 
         self.addStretch(1)
+
+    def clock_in(self):
+        if self.fields_set():
+            task = self.task_box.text_box.text()
+            project = self.project_box.text_box.text()
+            notes = self.notes_box.text()
+            self.model.add(task, project, notes)
+        else:
+            self.task_box.indicate_required()
+            self.project_box.indicate_required()
+
+    def text_update(self):
+        self.button.setEnabled(self.fields_set())
+
+    def fields_set(self):
+        return (self.task_box.text_box.hasAcceptableInput() and
+                self.project_box.text_box.hasAcceptableInput())
+
+
+class Textbox_with_Combo(QHBoxLayout):
+    def __init__(self, parent, item_type, items):
+        super().__init__()
+        self.parent = parent
+        label = Label(text=item_type + ":")
+        self.addWidget(label)
+        self.text_box = TextBox(placeholder="Enter " + item_type + " Name")
+        pattern = "^\S.*$"
+        # Have at least one non-whitespace, then anything
+        re = RegExValidator(pattern)
+        self.text_box.setValidator(re)
+        self.text_box.textChanged.connect(self.changed)
+        self.addWidget(self.text_box)
+        or_label = Label(text="OR")
+        self.addWidget(or_label)
+        combo = ComboBox(items)
+        self.addWidget(combo)
+
+    def changed(self):
+        self.text_box.setStyleSheet('')
+        if self.text_box.hasAcceptableInput():
+            self.parent.text_update()
+
+    def indicate_required(self):
+        if not self.text_box.hasAcceptableInput():
+            self.text_box.setStyleSheet('background-color:red')
 
 
 class History(QVBoxLayout):
@@ -122,4 +154,8 @@ class History(QVBoxLayout):
         table = QTableView()
         table.setModel(model)
         self.addWidget(table)
-    
+
+
+class Clock_Out(QVBoxLayout):
+    def __init__(self):
+        pass

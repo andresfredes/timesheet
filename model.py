@@ -50,7 +50,7 @@ class Model(QSqlTableModel):
     def close(self):
         self.db.close()
 
-    def add(self, task, project, notes=""):
+    def add(self, task, project, notes):
         now = dt.now()
         placeholder = dt.min
         with self.db:
@@ -62,6 +62,7 @@ class Model(QSqlTableModel):
             )
 
     def set_time_out(self):
+        # TODO add notes functionality -------------------------------------
         now = dt.now()
         placeholder = dt.min
         with self.db:
