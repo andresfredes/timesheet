@@ -49,14 +49,14 @@ class Font(QFont):
             self.setBold(True)
 
 
-class TextBox(QLineEdit):
+class Text_Box(QLineEdit):
     def __init__(self, placeholder=""):
         super().__init__()
         self.setPlaceholderText(placeholder)
         self.setFont(Font())
 
 
-class ComboBox(QComboBox):
+class Combo_Box(QComboBox):
     def __init__(self, items=[], func=None):
         super().__init__()
         self.addItems(items)
@@ -73,7 +73,7 @@ class Button(QPushButton):
             self.clicked.connect(func)
         self.setFont(Font())
 
-class RegExValidator(QRegularExpressionValidator):
+class RegEx_Validator(QRegularExpressionValidator):
     def __init__(self, pattern):
         re = QRegularExpression(pattern)
         super().__init__(re)

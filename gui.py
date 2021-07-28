@@ -17,9 +17,8 @@
 
 from PyQt5.QtWidgets import (QHBoxLayout, QMainWindow, QTableView, QVBoxLayout,
                              QWidget)
-
 from config import WINDOW
-from custom_widgets import (Action, Label, RegExValidator, TextBox, ComboBox,
+from custom_widgets import (Action, Label, RegEx_Validator, Text_Box, Combo_Box,
                             Button)
 from model import Model
 
@@ -57,7 +56,11 @@ class UI(QMainWindow):
         self.central = QWidget()
         layout = QHBoxLayout()
 
-        clocker = Task_Clocker(self.model)
+        if self.model.current_task_project():
+            clocker = Clock_Out(self, self.model)
+        else:
+            clocker = Task_Clocker(self, self.model)
+
         layout.addLayout(clocker)
         history = History(self.model)
         layout.addLayout(history)
@@ -75,36 +78,38 @@ class UI(QMainWindow):
 
 
 class Task_Clocker(QVBoxLayout):
-    def __init__(self, model):
+    def __init__(self, parent, model):
         super().__init__()
+        self.parent = parent
         self.model = model
-        self.addStretch(1)
+        self.addStretch(2)
+
+        title_label = Label(text="Task details:", style="bold")
+        self.addWidget(title_label)
 
         tasks, projects = model.tasks_projects()
         self.task_box = Textbox_with_Combo(self, "Task", tasks)
         self.addLayout(self.task_box)
         self.project_box = Textbox_with_Combo(self, "Project", projects)
         self.addLayout(self.project_box)
+        self.notes_box = Notes_Box()
+        self.addLayout(self.notes_box)
 
-        notes_box_layout = QHBoxLayout()
-        notes_label = Label(text="Notes (Optional):")
-        notes_box_layout.addWidget(notes_label)
-        self.notes_box = TextBox(placeholder="Enter Notes")
-        notes_box_layout.addWidget(self.notes_box)
-        self.addLayout(notes_box_layout)
-
+        self.addStretch(1)
+        
         self.button = Button(text="Clock In", func=self.clock_in)
         self.button.setEnabled(False)
         self.addWidget(self.button)
 
-        self.addStretch(1)
+        self.addStretch(2)
 
     def clock_in(self):
         if self.fields_set():
             task = self.task_box.text_box.text()
             project = self.project_box.text_box.text()
-            notes = self.notes_box.text()
+            notes = self.notes_box.text_box.text()
             self.model.add(task, project, notes)
+            self.parent.refresh_UI()
         else:
             self.task_box.indicate_required()
             self.project_box.indicate_required()
@@ -123,16 +128,16 @@ class Textbox_with_Combo(QHBoxLayout):
         self.parent = parent
         label = Label(text=item_type + ":")
         self.addWidget(label)
-        self.text_box = TextBox(placeholder="Enter " + item_type + " Name")
+        self.text_box = Text_Box(placeholder="Enter " + item_type + " Name")
         pattern = "^\S.*$"
         # Have at least one non-whitespace, then anything
-        re = RegExValidator(pattern)
+        re = RegEx_Validator(pattern)
         self.text_box.setValidator(re)
         self.text_box.textChanged.connect(self.changed)
         self.addWidget(self.text_box)
         or_label = Label(text="OR")
         self.addWidget(or_label)
-        combo = ComboBox(items)
+        combo = Combo_Box(items)
         self.addWidget(combo)
 
     def changed(self):
@@ -143,6 +148,17 @@ class Textbox_with_Combo(QHBoxLayout):
     def indicate_required(self):
         if not self.text_box.hasAcceptableInput():
             self.text_box.setStyleSheet('background-color:red')
+
+
+class Notes_Box(QHBoxLayout):
+    def __init__(self, notes=""):
+        super().__init__()
+        notes_label = Label(text="Notes (Optional):")
+        self.addWidget(notes_label)
+        self.text_box = Text_Box(placeholder="Enter Notes")
+        if notes:
+            self.text_box.setText(notes)
+        self.addWidget(self.text_box)
 
 
 class History(QVBoxLayout):
@@ -157,5 +173,34 @@ class History(QVBoxLayout):
 
 
 class Clock_Out(QVBoxLayout):
-    def __init__(self):
-        pass
+    def __init__(self, parent, model):
+        super().__init__()
+        self.parent = parent
+        self.model = model
+        self.addStretch(2)
+        
+        task, project, notes, time = self.model.current_task_project()
+        title_label = Label(text="Currently doing:", style="bold")
+        self.addWidget(title_label)
+        task_label = Label(text=task + " - " + project)
+        self.addWidget(task_label)
+        time_label = Label(text=str(time))
+        self.addWidget(time_label)
+
+        self.addStretch(1)
+
+        self.notes_box = Notes_Box(notes)
+        self.addLayout(self.notes_box)
+        
+        self.addStretch(1)
+
+        button = Button(text="Clock Out", func=self.clock_out)
+        self.addWidget(button)
+
+        self.addStretch(2)
+
+    def clock_out(self):
+        notes = self.notes_box.text_box.text()
+        self.model.set_time_out(notes)
+        self.parent.refresh_UI()
+        

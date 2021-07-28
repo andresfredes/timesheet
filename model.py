@@ -44,7 +44,9 @@ class Model(QSqlTableModel):
         self.db.commit()
 
     def _connect(self):
-        self.db = sqlite3.connect(DATA_DIR + 'data.db')
+        self.db = sqlite3.connect(DATA_DIR + 'data.db',
+                                  detect_types=(sqlite3.PARSE_DECLTYPES |
+                                                sqlite3.PARSE_COLNAMES))
         self.db.row_factory = sqlite3.Row
 
     def close(self):
@@ -61,16 +63,15 @@ class Model(QSqlTableModel):
                 (task, project, notes, now, placeholder)
             )
 
-    def set_time_out(self):
-        # TODO add notes functionality -------------------------------------
+    def set_time_out(self, notes):
         now = dt.now()
         placeholder = dt.min
         with self.db:
             self.db.execute(
-                'update timestamp '
-                'set time_out=(?) '
+                'update timesheet '
+                'set notes=(?), time_out=(?) '
                 'where time_out=(?)',
-                (now, placeholder)
+                (notes, now, placeholder)
             )
 
     def tasks_projects(self):
@@ -83,3 +84,22 @@ class Model(QSqlTableModel):
                 tasks.add(row['task'])
                 projects.add(row['project'])
         return sorted(tasks), sorted(projects)
+
+    def current_task_project(self):
+        placeholder = dt.min
+        cursor = self.db.execute(
+            'select all task, project, notes, time_in from timesheet '
+            'where time_out=(?)',
+            (placeholder, )
+        )
+        current_row = cursor.fetchone()
+        format = "%A  %d/%m/%y  %H:%M"
+        if current_row:
+            return (
+                current_row['task'],
+                current_row['project'],
+                current_row['notes'],
+                current_row['time_in'].strftime(format)
+            )
+        else:
+            return None
