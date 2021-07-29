@@ -17,17 +17,22 @@
 
 from PyQt5.QtWidgets import (QHBoxLayout, QMainWindow, QTableView, QVBoxLayout,
                              QWidget)
-from config import WINDOW
 from custom_widgets import (Action, Label, RegEx_Validator, Text_Box, Combo_Box,
                             Button)
-from model import Model
+from model import Database, Model
+from config import WINDOW
 
 class UI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.title = "Time Tracker"
-        self.model = Model()
+        self.init_DB()
         self.init_UI()
+
+    def init_DB(self):
+        db = Database()
+        db.open()
+        self.model = Model(db)
 
     def init_UI(self):
         self.setWindowTitle(self.title)
@@ -73,8 +78,10 @@ class UI(QMainWindow):
         self.add_widgets()
 
     def close(self):
-        self.model.db.close()
         super().close()
+
+    def closeEvent(self, event):
+        self.model.db.close()
 
 
 class Task_Clocker(QVBoxLayout):

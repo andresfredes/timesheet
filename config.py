@@ -23,3 +23,5 @@ WINDOW = {
 }
 
 DATA_DIR = "data/"
+
+DB_FILENAME = "data.db"
