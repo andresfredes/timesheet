@@ -25,3 +25,12 @@ WINDOW = {
 DATA_DIR = "data/"
 
 DB_FILENAME = "data.db"
+
+COLUMN_NAMES = [
+    "ID",
+    "Task",
+    "Project",
+    "Notes",
+    "Time In",
+    "Time Out"
+]

@@ -20,7 +20,7 @@ from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
 from PyQt5.QtCore import Qt
 from datetime import datetime as dt
 
-from config import DATA_DIR, DB_FILENAME
+from config import DATA_DIR, DB_FILENAME, COLUMN_NAMES
 
 class Model(QSqlTableModel):
     def __init__(self, database):
@@ -42,12 +42,10 @@ class Model(QSqlTableModel):
         self.setTable('timesheet')
         self.setEditStrategy(QSqlTableModel.OnFieldChange)
         self.select()
-        self.setHeaderData(0, Qt.Horizontal, 'ID')
-        self.setHeaderData(1, Qt.Horizontal, "Task")
-        self.setHeaderData(2, Qt.Horizontal, "Project")
-        self.setHeaderData(3, Qt.Horizontal, "Notes")
-        self.setHeaderData(4, Qt.Horizontal, "Time In")
-        self.setHeaderData(5, Qt.Horizontal, "Time Out")
+        self.db_cols = {}
+        for index, name in enumerate(COLUMN_NAMES):
+            self.db_cols[name] = index
+            self.setHeaderData(index, Qt.Horizontal, name)
 
     def _connect(self):
         self.db = sqlite3.connect(
@@ -111,6 +109,25 @@ class Model(QSqlTableModel):
         else:
             return None
 
+    def flags(self, index):
+        if index.column() == 3:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+        else:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            record = QSqlTableModel.data(self, index, role)
+            if index.column() in [4, 5]:
+                in_format = "%Y-%m-%d %H:%M:%S.%f"
+                time = dt.strptime(record, in_format)
+                out_format = "%H:%M  %d/%m/%y"
+                record = time.strftime(out_format)
+            return record
+        else:
+            return None
+
+        
 class Database(QSqlDatabase):
     def __init__(self):
         super().__init__('QSQLITE')

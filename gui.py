@@ -16,7 +16,7 @@
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
 from PyQt5.QtWidgets import (QHBoxLayout, QMainWindow, QTableView, QVBoxLayout,
-                             QWidget)
+                             QWidget, QHeaderView)
 from custom_widgets import (Action, Label, RegEx_Validator, Text_Box, Combo_Box,
                             Button)
 from model import Database, Model
@@ -176,6 +176,8 @@ class History(QVBoxLayout):
 
         table = QTableView()
         table.setModel(model)
+        table.setColumnHidden(0, True)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.addWidget(table)
 
 
