@@ -16,8 +16,8 @@
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
 import os, sqlite3
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
-from PyQt5.QtCore import Qt
+from PyQt5.QtSql import QSqlTableModel
+from PyQt5.QtCore import Qt, pyqtSignal
 from datetime import datetime as dt
 
 from config import DATA_DIR, DB_FILENAME, COLUMN_NAMES
@@ -40,7 +40,7 @@ class Model(QSqlTableModel):
             'time_out timestamp)'
         )
         self.setTable('timesheet')
-        self.setEditStrategy(QSqlTableModel.OnFieldChange)
+        self.setEditStrategy(QSqlTableModel.OnManualChange)
         self.select()
         self.db_cols = {}
         for index, name in enumerate(COLUMN_NAMES):
@@ -67,6 +67,7 @@ class Model(QSqlTableModel):
                 'values (?, ?, ?, ?, ?)',
                 (task, project, notes, now, active)
             )
+        self.submitAll()
 
     def set_time_out(self, notes):
         now = dt.now()
@@ -78,6 +79,7 @@ class Model(QSqlTableModel):
                 'where time_out=(?)',
                 (notes, now, active)
             )
+        self.submitAll()
 
     def tasks_projects(self):
         tasks = set()
@@ -119,16 +121,12 @@ class Model(QSqlTableModel):
         if role == Qt.DisplayRole:
             record = QSqlTableModel.data(self, index, role)
             if index.column() in [4, 5]:
-                in_format = "%Y-%m-%d %H:%M:%S.%f"
-                time = dt.strptime(record, in_format)
+                if "0001" in record:
+                    return "Running..."
+                format = "%Y-%m-%d %H:%M:%S.%f"
+                time = dt.strptime(record, format)
                 out_format = "%H:%M  %d/%m/%y"
                 record = time.strftime(out_format)
             return record
         else:
             return None
-
-        
-class Database(QSqlDatabase):
-    def __init__(self):
-        super().__init__('QSQLITE')
-        self.setDatabaseName(DATA_DIR + DB_FILENAME)

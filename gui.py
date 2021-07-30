@@ -18,9 +18,9 @@
 from PyQt5.QtWidgets import (QHBoxLayout, QMainWindow, QTableView, QVBoxLayout,
                              QWidget, QHeaderView)
 from custom_widgets import (Action, Label, RegEx_Validator, Text_Box, Combo_Box,
-                            Button)
-from model import Database, Model
-from config import WINDOW
+                            Button, Database)
+from model import Model
+from config import WINDOW, DATA_DIR, DB_FILENAME
 
 class UI(QMainWindow):
     def __init__(self):
@@ -30,7 +30,7 @@ class UI(QMainWindow):
         self.init_UI()
 
     def init_DB(self):
-        db = Database()
+        db = Database(DATA_DIR + DB_FILENAME)
         db.open()
         self.model = Model(db)
 
@@ -67,8 +67,8 @@ class UI(QMainWindow):
             clocker = Task_Clocker(self, self.model)
 
         layout.addLayout(clocker)
-        history = History(self.model)
-        layout.addLayout(history)
+        self.history = History(self.model)
+        layout.addLayout(self.history)
 
         self.central.setLayout(layout)
         self.setCentralWidget(self.central)
@@ -76,6 +76,9 @@ class UI(QMainWindow):
     def refresh_UI(self):
         self.central.setParent(None)
         self.add_widgets()
+
+    def update_history(self):
+        self.history.refresh()
 
     def close(self):
         super().close()
@@ -171,14 +174,18 @@ class Notes_Box(QHBoxLayout):
 class History(QVBoxLayout):
     def __init__(self, model):
         super().__init__()
+        self.model = model
         label = Label(text="History")
         self.addWidget(label)
 
-        table = QTableView()
-        table.setModel(model)
-        table.setColumnHidden(0, True)
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.addWidget(table)
+        self.table = QTableView()
+        self.init_table()
+
+    def init_table(self):
+        self.table.setModel(self.model)
+        self.table.setColumnHidden(0, True)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.addWidget(self.table)
 
 
 class Clock_Out(QVBoxLayout):

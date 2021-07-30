@@ -15,8 +15,9 @@
 #     You should have received a copy of the GNU General Public License
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt5.QtCore import Qt, QRegularExpression
+from PyQt5.QtCore import Qt, QRegularExpression, pyqtSignal
 from PyQt5.QtGui import QFont, QRegularExpressionValidator
+from PyQt5.QtSql import QSqlDatabase
 from PyQt5.QtWidgets import (QAction, QComboBox, QLabel, QLineEdit,
                              QPushButton)
 
@@ -77,3 +78,8 @@ class RegEx_Validator(QRegularExpressionValidator):
     def __init__(self, pattern):
         re = QRegularExpression(pattern)
         super().__init__(re)
+
+class Database(QSqlDatabase):
+    def __init__(self, filename):
+        super().__init__('QSQLITE')
+        self.setDatabaseName(filename)
