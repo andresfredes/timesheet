@@ -40,12 +40,13 @@ class Model(QSqlTableModel):
             'time_out timestamp)'
         )
         self.setTable('timesheet')
-        self.setEditStrategy(QSqlTableModel.OnManualChange)
+        self.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.select()
         self.db_cols = {}
         for index, name in enumerate(COLUMN_NAMES):
             self.db_cols[name] = index
             self.setHeaderData(index, Qt.Horizontal, name)
+        self.submitAll()
 
     def _connect(self):
         self.db = sqlite3.connect(
@@ -112,21 +113,18 @@ class Model(QSqlTableModel):
             return None
 
     def flags(self, index):
-        if index.column() == 3:
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
-        else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def data(self, index, role):
         if role == Qt.DisplayRole:
             record = QSqlTableModel.data(self, index, role)
-            if index.column() in [4, 5]:
-                if "0001" in record:
-                    return "Running..."
-                format = "%Y-%m-%d %H:%M:%S.%f"
-                time = dt.strptime(record, format)
-                out_format = "%H:%M  %d/%m/%y"
-                record = time.strftime(out_format)
-            return record
-        else:
-            return None
+            if record:
+                if index.column() in [4, 5]:
+                    if "0001" in record:
+                        return "Running..."
+                    format = "%Y-%m-%d %H:%M:%S.%f"
+                    time = dt.strptime(record, format)
+                    out_format = "%H:%M  %d/%m/%y"
+                    record = time.strftime(out_format)
+                return record
+        return None
