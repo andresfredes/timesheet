@@ -17,8 +17,9 @@
 
 import os, sqlite3
 from PyQt5.QtSql import QSqlTableModel
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt
 from datetime import datetime as dt
+from datetime import timedelta as delta
 
 from config import DATA_DIR, DB_FILENAME, COLUMN_NAMES
 
@@ -112,6 +113,54 @@ class Model(QSqlTableModel):
         else:
             return None
 
+    def most_recent(self):
+        cursor = self.db.execute(
+            'select all task, project from timesheet '
+            'order by id desc '
+        )
+        recent = cursor.fetchone()
+        if not recent:
+            raise Empty_DB_Exception()
+        return (recent['task'], recent['project'])
+
+    def get_total_time(self, item_type, item_name):
+        cursor = self.db.execute(
+            'select all time_in, time_out from timesheet '
+            'where ?=(?)',
+            (item_type, item_name)
+        )
+        matching_rows = cursor.fetchall()
+        total = delta(microseconds=1)
+        week_total = delta(microseconds=1)
+        for row in matching_rows:
+            in_time = row['time_in']
+            out_time = row['time_out']
+            if out == dt.min:
+                out = dt.now()
+            total += (out_time - in_time)
+            week_total += self.time_in_week(in_time, out_time)
+        return (total, week_total)
+
+    def time_in_week(in_time, out_time):
+        now = dt.now()
+        now_time = now.time()
+        week_start = now - delta(
+            days=now.weekday(),
+            hours=now_time.hour,
+            minutes=now_time.minute,
+            seconds=now_time.second,
+            microseconds=now_time.microsecond
+        )
+        if week_start < out_time:
+            if week_start < in_time:
+                diff = out_time - in_time
+            else:
+                diff = out_time - week_start
+        else:
+            diff = delta(microseconds=1)
+        return diff
+
+
     def flags(self, index):
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
@@ -128,3 +177,7 @@ class Model(QSqlTableModel):
                     record = time.strftime(out_format)
                 return record
         return None
+
+
+class Empty_DB_Exception(Exception):
+    pass

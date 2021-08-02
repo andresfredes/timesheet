@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (QHBoxLayout, QMainWindow, QTableView, QVBoxLayout,
                              QWidget, QHeaderView)
 from custom_widgets import (Action, Label, RegEx_Validator, Text_Box, Combo_Box,
                             Button, Database)
-from model import Model
+from model import Model, Empty_DB_Exception
 from config import WINDOW, DATA_DIR, DB_FILENAME
 
 class UI(QMainWindow):
@@ -65,10 +65,12 @@ class UI(QMainWindow):
             clocker = Clock_Out(self, self.model)
         else:
             clocker = Task_Clocker(self, self.model)
-
         layout.addLayout(clocker)
+        
         self.history = History(self.model)
         layout.addLayout(self.history)
+        
+        layout.addLayout(Totals_Box(self.model))
 
         self.central.setLayout(layout)
         self.setCentralWidget(self.central)
@@ -219,4 +221,44 @@ class Clock_Out(QVBoxLayout):
         notes = self.notes_box.text_box.text()
         self.model.set_time_out(notes)
         self.parent.refresh_UI()
-        
+
+class Totals_Box(QVBoxLayout):
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+        title = Label(text="Totals")
+        self.addWidget(title)
+        self.addStretch(1)
+
+        try:
+            task, project = self.model.most_recent()
+        except Empty_DB_Exception:
+            label = Label(text="No timesheet details saved")
+            self.addWidget(label)
+        else:
+            task_week, task_total = self.model.get_total_time("task", task)
+            project_week, project_total = self.model.get_total_time(
+                "project", project)
+            totals_list = self.format_labels(task, task_week, task_total)
+            totals_list.extend(
+                self.format_labels(project, project_week, project_total)
+            )
+            for text in totals_list:
+                style = "bold" if text in totals_list[::2] else ""
+                new_label = Label(text=text, style=style)
+                self.addWidget(new_label)
+        self.addStretch(1)
+
+    def format_labels(self, item, week, total):
+        return [
+            f"{item} this week",
+            f"{self.format_time(week)}",
+            f"{item} total",
+            f"{self.format_time(total)}"
+        ]
+
+    def format_time(self, time):
+        days = time.days
+        hours = time.seconds // 3600
+        day_string = f"Days: {days} " if days else ""
+        return f"{day_string}Hours: {hours}"
