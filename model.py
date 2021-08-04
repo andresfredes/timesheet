@@ -15,6 +15,11 @@
 #     You should have received a copy of the GNU General Public License
 #     along with timesheet.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Timesheet: task/project time keeping program.
+
+model.py hosts the SQLITE3 / QtSql database model and any related classes
+"""
+
 import os, sqlite3
 from PyQt5.QtSql import QSqlTableModel
 from PyQt5.QtCore import Qt
@@ -23,7 +28,17 @@ from datetime import timedelta as delta
 
 from config import DATA_DIR, DB_FILENAME, COLUMN_NAMES
 
+
 class Model(QSqlTableModel):
+    """Model subclasses PyQt5's QSqlTableModel for ease of use with PyQt5's
+    views to display the database information. It is intended for use in a
+    model/view architecture as per Qt standards.
+    Database access is primarily managed using SQLITE3.
+
+    Args:
+        database (QSqlDatabase): Database to connect to and model. 
+            This should be passed in by the hosting view.
+    """
     def __init__(self, database):
         super().__init__(db=database)
         try:
@@ -49,6 +64,8 @@ class Model(QSqlTableModel):
             self.setHeaderData(index, Qt.Horizontal, name)
         self.submitAll()
 
+
+
     def _connect(self):
         self.db = sqlite3.connect(
             DATA_DIR + DB_FILENAME,
@@ -56,10 +73,30 @@ class Model(QSqlTableModel):
         )
         self.db.row_factory = sqlite3.Row
 
+
+
     def close(self):
+        """Safely close database before exiting.
+        """
         self.db.close()
 
+
+
     def add(self, task, project, notes):
+        """Adds a record into the database consisting of the provided parameters
+        and the additional defaults (id, time_in).
+
+        Uses datetime.min as a placeholder to represent an ongoing task.
+        This is referred to internally with the var 'active'.
+
+        On submission of the record, QSqlTableModel automatically triggers the
+        dataChanged() event, notifying the host view of the change.
+
+        Args:
+            task (str): User entered/chosen 'task' value
+            project (str): User entered/chosen 'project' value
+            notes (str): User entered 'notes' value
+        """
         now = dt.now()
         active = dt.min
         with self.db:
@@ -71,7 +108,19 @@ class Model(QSqlTableModel):
             )
         self.submitAll()
 
+
+
     def set_time_out(self, notes):
+        """Finalises the currently active record, by substituting the
+        placeholder 'active' (datetime.min) with the current time.
+
+        On submission of the record, QSqlTableModel automatically triggers the
+        dataChanged() event, notifying the host view of the change.
+
+        Args:
+            notes (str): User updated 'notes' value - this will overwrite any
+                existing notes.
+        """
         now = dt.now()
         active = dt.min
         with self.db:
@@ -83,7 +132,18 @@ class Model(QSqlTableModel):
             )
         self.submitAll()
 
+
+
     def tasks_projects(self):
+        """Queries the database and returns sorted lists of all tasks and
+        projects respectively.
+
+        Returns:
+            (
+                list: all tasks, alpha-sorted
+                list: all projects, alpha-sorted
+            )
+        """
         tasks = set()
         projects = set()
         for row in self.db.execute(
@@ -94,7 +154,22 @@ class Model(QSqlTableModel):
                 projects.add(row['project'])
         return sorted(tasks), sorted(projects)
 
+
+
     def current_task_project(self):
+        """Queries the database and returns the details within the 'current'
+        record as denoted by the placeholder of time_out == datetime.min.
+
+        Returns:
+            (
+                str: task name
+                str: project name
+                str: notes
+                str: time of clock in, in human-readable format
+            )
+            OR
+            None if there is no currently active record
+        """
         active = dt.min
         cursor = self.db.execute(
             'select all task, project, notes, time_in from timesheet '
@@ -113,7 +188,21 @@ class Model(QSqlTableModel):
         else:
             return None
 
+
+
     def most_recent(self):
+        """Queries the database and returns the most recent record, which may
+        or may not be currently active.
+
+        Raises:
+            Empty_DB_Exception: In case of fresh install or deleted records.
+
+        Returns:
+            (
+                str: task name
+                str: project name
+            )
+        """
         cursor = self.db.execute(
             'select all task, project from timesheet '
             'order by id desc '
@@ -123,7 +212,22 @@ class Model(QSqlTableModel):
             raise Empty_DB_Exception()
         return (recent['task'], recent['project'])
 
+
+
     def get_total_time(self, item_type, item_name):
+        """Provides total time elapsed for the chosen task or project (as
+        defined by parameters).
+
+        Args:
+            item_type (str): column to search (task or project)
+            item_name (str): keyword to search within column
+
+        Returns:
+            (
+                datetime.timedelta: item total time elapsed - entire database
+                datetime.timedelta: item total time elapsed - this week only
+            )
+        """
         cursor = self.db.execute(
             'select all time_in, time_out from timesheet '
             'where ?=(?)',
@@ -138,10 +242,12 @@ class Model(QSqlTableModel):
             if out == dt.min:
                 out = dt.now()
             total += (out_time - in_time)
-            week_total += self.time_in_week(in_time, out_time)
+            week_total += self._time_in_week(in_time, out_time)
         return (total, week_total)
 
-    def time_in_week(in_time, out_time):
+
+
+    def _time_in_week(in_time, out_time):
         now = dt.now()
         now_time = now.time()
         week_start = now - delta(
@@ -161,10 +267,39 @@ class Model(QSqlTableModel):
         return diff
 
 
+
     def flags(self, index):
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        """Overloaded QSqlTableModel function to ensure that the view is
+        read-only.
+
+        For Qt internal model/view processing only.
+
+        Args:
+            index (QModelIndex): index object of selected element
+
+        Returns:
+            enum: Qt values
+        """
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+
 
     def data(self, index, role):
+        """Overloaded QSqlTableModel function to allow a Qt view correct access
+        to the model's contained data.
+
+        For Qt internal model/view processing only.
+
+        Args:
+            index (QModelIndex): index object of selected element
+            role (enum): Qt values representing the type of interaction that the
+                view or delegate is intending to have.
+
+        Returns:
+            QVariant: The record requested, with formatting if required.
+            OR
+            None if for an invalid or non-display request
+        """
         if role == Qt.DisplayRole:
             record = QSqlTableModel.data(self, index, role)
             if record:
@@ -177,7 +312,11 @@ class Model(QSqlTableModel):
                     record = time.strftime(out_format)
                 return record
         return None
+    
 
 
 class Empty_DB_Exception(Exception):
+    """Subclassed exception, for clarity of code.
+    No additional functionality.
+    """
     pass

@@ -15,6 +15,9 @@
 #     You should have received a copy of the GNU General Public License
 #     along with __________.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Timesheet: task/project time keeping program.
+"""
+
 import sys
 
 from gui import UI
