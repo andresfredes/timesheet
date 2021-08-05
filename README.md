@@ -6,6 +6,10 @@ Description
 Records time of clocking in and out, along with task for given time period.
 Also allows viewing and editing of previous timesheets.
 
+Documentation
+-------------
+Refer to docs/build/html/index.html
+
 Usage
 -----
 `python timesheet.py`

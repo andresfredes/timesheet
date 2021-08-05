@@ -21,7 +21,7 @@ model.py hosts the SQLITE3 / QtSql database model and any related classes
 """
 
 import os, sqlite3
-from PyQt5.QtSql import QSqlTableModel
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
 from PyQt5.QtCore import Qt
 from datetime import datetime as dt
 from datetime import timedelta as delta
@@ -139,10 +139,9 @@ class Model(QSqlTableModel):
         projects respectively.
 
         Returns:
-            (
-                list: all tasks, alpha-sorted
-                list: all projects, alpha-sorted
-            )
+            (tuple): tuple containing:
+                - tasks(list): all tasks, alpha-sorted
+                - projects(list): all projects, alpha-sorted
         """
         tasks = set()
         projects = set()
@@ -161,14 +160,11 @@ class Model(QSqlTableModel):
         record as denoted by the placeholder of time_out == datetime.min.
 
         Returns:
-            (
-                str: task name
-                str: project name
-                str: notes
-                str: time of clock in, in human-readable format
-            )
-            OR
-            None if there is no currently active record
+            (tuple): tuple containing the below, or None:
+                - task(str): task name
+                - project(str): project name
+                - notes(str): notes
+                - time_in(str): time of clock in, in human-readable format
         """
         active = dt.min
         cursor = self.db.execute(
@@ -198,10 +194,9 @@ class Model(QSqlTableModel):
             Empty_DB_Exception: In case of fresh install or deleted records.
 
         Returns:
-            (
-                str: task name
-                str: project name
-            )
+            (tuple): tuple containing:
+                - task(str): task name
+                - project(str): project name
         """
         cursor = self.db.execute(
             'select all task, project from timesheet '
@@ -223,10 +218,9 @@ class Model(QSqlTableModel):
             item_name (str): keyword to search within column
 
         Returns:
-            (
-                datetime.timedelta: item total time elapsed - entire database
-                datetime.timedelta: item total time elapsed - this week only
-            )
+            (tuple): tuple containing:
+                - total(datetime.timedelta): total time elapsed
+                - week_total(datetime.timedelta): time elapsed for this week
         """
         cursor = self.db.execute(
             'select all time_in, time_out from timesheet '
@@ -278,7 +272,7 @@ class Model(QSqlTableModel):
             index (QModelIndex): index object of selected element
 
         Returns:
-            enum: Qt values
+            (enum): Qt values
         """
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
@@ -296,9 +290,7 @@ class Model(QSqlTableModel):
                 view or delegate is intending to have.
 
         Returns:
-            QVariant: The record requested, with formatting if required.
-            OR
-            None if for an invalid or non-display request
+            (QVariant): The record, or None if invalid or not for display.
         """
         if role == Qt.DisplayRole:
             record = QSqlTableModel.data(self, index, role)
@@ -313,6 +305,16 @@ class Model(QSqlTableModel):
                 return record
         return None
     
+
+class Database(QSqlDatabase):
+    """The SQLITE database with defined path/name.
+
+    Args:
+        filename (str): the path/filename of the database to access/create.
+    """
+    def __init__(self, filename):
+        super().__init__('QSQLITE')
+        self.setDatabaseName(filename)
 
 
 class Empty_DB_Exception(Exception):

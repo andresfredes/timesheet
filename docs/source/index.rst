@@ -1,14 +1,12 @@
 Welcome to timesheet's documentation!
 =====================================
 
-.. automodule:: timesheet.timesheet
-
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    usage
-
+   timesheet
+   modules
 
 
 Indices and tables

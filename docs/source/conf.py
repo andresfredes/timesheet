@@ -12,7 +12,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
+
 
 # for conversion from markdown to html
 import recommonmark.parser
@@ -23,6 +24,8 @@ project = 'timesheet'
 copyright = '2021, Andres Fredes'
 author = 'Andres Fredes'
 
+# The full version, including alpha/beta/rc tags
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 

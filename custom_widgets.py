@@ -141,14 +141,3 @@ class RegEx_Validator(QRegularExpressionValidator):
     def __init__(self, pattern):
         re = QRegularExpression(pattern)
         super().__init__(re)
-
-
-class Database(QSqlDatabase):
-    """The SQLITE database with defined path/name.
-
-    Args:
-        filename (str): the path/filename of the database to access/create.
-    """
-    def __init__(self, filename):
-        super().__init__('QSQLITE')
-        self.setDatabaseName(filename)
