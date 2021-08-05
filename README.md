@@ -8,7 +8,7 @@ Also allows viewing and editing of previous timesheets.
 
 Documentation
 -------------
-Refer to docs/build/html/index.html
+https://andresfredes-timesheet.readthedocs.io/en/latest/?
 
 Usage
 -----
